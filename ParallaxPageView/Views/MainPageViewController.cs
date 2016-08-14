@@ -9,16 +9,9 @@ namespace ParallaxPageView
     public partial class MainPageViewController : UIPageViewController
     {
         private MainPageViewSource m_Source;
-
-        private UIViewController m_NextView;
-
-        private UIViewController m_PreviousView;
-
         private UIScrollView m_ScrollView;
-
-        public MainPageViewSource Source {
-            get { return m_Source; }
-        }
+        private UIViewController m_NextView;
+        private UIViewController m_PreviousView;
 
         public MainPageViewController (IntPtr handle) : base (handle) { }
 
@@ -26,50 +19,62 @@ namespace ParallaxPageView
         {
             base.ViewDidLoad ();
 
-            WeakDelegate = this;
-
             m_Source = new MainPageViewSource (this);
+
+            WeakDelegate = this;
+            WeakDataSource = m_Source;
 
             var viewControllers = new UIViewController [] { m_Source.PagesViews [0] };
             SetViewControllers (viewControllers, UIPageViewControllerNavigationDirection.Forward, false, null);
 
-            WeakDataSource = m_Source;
+            DidFinishAnimating += OnDidFinishAnimating;
+            WillTransition += OnWillTransition;
 
             m_ScrollView = GetScrollView ();
+            m_ScrollView.Scrolled += OnScrolled;
+        }
 
-            DidFinishAnimating += (object sender, UIPageViewFinishedAnimationEventArgs e) => {
+        private void OnDidFinishAnimating (object sender, UIPageViewFinishedAnimationEventArgs e)
+        {
+            if (e.Completed) {
+                m_PreviousView = m_Source.GetPreviousViewController (this, m_NextView);
+                if (m_PreviousView is DataViewController)
+                    ((DataViewController)m_PreviousView).BackwardParallax (0f, m_PreviousView.View.Frame.Width, false);
 
-                if (e.Completed) {
-                    m_PreviousView = m_Source.GetPreviousViewController (this, m_NextView);
-                    if (m_PreviousView is DataViewController)
-                        ((DataViewController)m_PreviousView).BackwardParallax (0f, m_PreviousView.View.Frame.Width, false);
-
-                    m_PreviousView = m_Source.GetNextViewController (this, m_NextView);
-                    if (m_PreviousView is DataViewController)
-                        ((DataViewController)m_PreviousView).ForwardParallax (0f, m_PreviousView.View.Frame.Width, false);
-                }
-
-                if (m_NextView is DataViewController)
-                    ((DataViewController)m_NextView).ResetBackgroundPosition ();
-
-                m_NextView = null;
-                m_PreviousView = null;
-            };
-
-            WillTransition += (object sender, UIPageViewControllerTransitionEventArgs e) => {
-                m_NextView = null;
-                m_PreviousView = null;
-
-                if (e.PendingViewControllers.Length > 0)
-                    m_NextView = e.PendingViewControllers [0];
-            };
-
-            if (m_ScrollView != null) {
-                m_ScrollView.Scrolled += (object sender, EventArgs e) => {
-                    nfloat offset = m_ScrollView.ContentOffset.X - m_ScrollView.Frame.Width;
-                    AnimateOnScroll (offset, m_ScrollView.Frame.Width);
-                };
+                m_PreviousView = m_Source.GetNextViewController (this, m_NextView);
+                if (m_PreviousView is DataViewController)
+                    ((DataViewController)m_PreviousView).ForwardParallax (0f, m_PreviousView.View.Frame.Width, false);
             }
+
+            if (m_NextView is DataViewController)
+                ((DataViewController)m_NextView).ResetBackgroundPosition ();
+
+            m_NextView = null;
+            m_PreviousView = null;
+        }
+
+        private void OnWillTransition (object sender, UIPageViewControllerTransitionEventArgs e)
+        {
+            m_NextView = null;
+            m_PreviousView = null;
+
+            if (e.PendingViewControllers.Length > 0)
+                m_NextView = e.PendingViewControllers [0];
+        }
+
+        private UIScrollView GetScrollView ()
+        {
+            foreach (UIView view in View.Subviews) {
+                if (view is UIScrollView)
+                    return (UIScrollView)view;
+            }
+            return null;
+        }
+
+        private void OnScrolled (object sender, EventArgs e)
+        {
+            nfloat offset = m_ScrollView.ContentOffset.X - m_ScrollView.Frame.Width;
+            AnimateOnScroll (offset, m_ScrollView.Frame.Width);
         }
 
         private void AnimateOnScroll (nfloat offset, nfloat frameWidth)
@@ -94,15 +99,5 @@ namespace ParallaxPageView
                     ((DataViewController)m_PreviousView).BackwardParallax (offset, frameWidth, true);
             }
         }
-
-        private UIScrollView GetScrollView ()
-        {
-            foreach (UIView view in View.Subviews) {
-                if (view is UIScrollView)
-                    return (UIScrollView)view;
-            }
-            return null;
-        }
     }
 }
-

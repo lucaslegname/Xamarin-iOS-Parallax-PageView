@@ -6,27 +6,23 @@ namespace ParallaxPageView
 {
     public class MainPageViewSource : UIPageViewControllerDataSource
     {
-
         private List<string> pageData;
         private List<DataViewController> pageViews;
-
-        private UIViewController m_RootNav;
 
         public List<string> PageData { get { return pageData; } }
         public List<DataViewController> PagesViews { get { return pageViews; } }
 
         public MainPageViewSource (UIViewController rootNav)
         {
-            m_RootNav = rootNav;
-
             pageData = new List<string> ();
             pageViews = new List<DataViewController> ();
 
             for (int i = 1;i <= 3; i++) {
-                pageData.Add(i.ToString ("00"));
+                string viewName = i.ToString ("00");
+                pageData.Add(viewName);
 
-                var dataViewController = (DataViewController)m_RootNav.Storyboard.InstantiateViewController ("DataViewController");
-                dataViewController.DataObject = i.ToString ("00");
+                var dataViewController = (DataViewController)rootNav.Storyboard.InstantiateViewController ("DataViewController");
+                dataViewController.DataObject = viewName;
                 pageViews.Add (dataViewController);
             }
         }
@@ -47,8 +43,6 @@ namespace ParallaxPageView
             return pageData.IndexOf (viewController.DataObject);
         }
 
-        #region Page View Controller Data Source
-
         public override UIViewController GetNextViewController (UIPageViewController pageViewController, UIViewController referenceViewController)
         {
             int index = IndexOf ((DataViewController)referenceViewController);
@@ -68,8 +62,5 @@ namespace ParallaxPageView
 
             return GetViewController (index - 1, referenceViewController.Storyboard);
         }
-
-        #endregion
     }
 }
-
