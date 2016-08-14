@@ -8,18 +8,6 @@ namespace ParallaxPageView
     {
         private UIImageView m_BackgroundImageView;
 
-        public UIImageView BgImageView { get { return m_BackgroundImageView; } }
-
-        public int CurrentPage {
-            get;
-            set;
-        }
-
-        public int TotalPages {
-            get;
-            set;
-        }
-
         public string DataObject {
             get; set;
         }
@@ -41,23 +29,14 @@ namespace ParallaxPageView
             this.View.AddSubview (backgroundView);
             backgroundView.Layer.ZPosition = -1;
             backgroundView.ClipsToBounds = true;
+
+            dataLabel.Text = DataObject;
         }
 
         public override void DidReceiveMemoryWarning ()
         {
             base.DidReceiveMemoryWarning ();
             // Release any cached data, images, etc that aren't in use.
-        }
-
-        public override void ViewWillAppear (bool animated)
-        {
-            base.ViewWillAppear (animated);
-            dataLabel.Text = DataObject;
-        }
-
-        public override void ViewDidLayoutSubviews ()
-        {
-            base.ViewDidLayoutSubviews ();
         }
 
         public void ForwardParallax (nfloat offset, nfloat viewWidth, bool previousScreen)
@@ -88,4 +67,3 @@ namespace ParallaxPageView
         }
     }
 }
-
